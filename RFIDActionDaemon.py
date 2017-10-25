@@ -1,8 +1,11 @@
+#!/usr/bin/env python 
+
 from pirc522 import RFID
 import signal
 import time
 from subprocess import call
 import os
+import datetime
 
 
 uids = {}
@@ -27,7 +30,6 @@ while True:
     # Request tag
     (error, data) = rdr.request()
     if not error:
-#        print("\nDetected")
 
         (error, uid) = rdr.anticoll()
         if not error:
@@ -36,6 +38,7 @@ while True:
             if bytes_uid != previous_uid or previous_timestamp + time_threshold < time.time():
               previous_uid = bytes_uid
               previous_timestamp = time.time()
+              print datetime.datetime.fromtimestamp(time.time())
               print("\nCard read UID: "+str(uid[0])+","+str(uid[1])+","+str(uid[2])+","+str(uid[3])+","+str(uid[4]))
               if bytes_uid in uids:
                 print (uids[bytes_uid]);
