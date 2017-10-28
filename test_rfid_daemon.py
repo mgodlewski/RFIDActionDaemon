@@ -5,8 +5,8 @@ import datetime
 class EventManagerSpy:
     def __init__(self):
         self.received_events = []
-    def notify(self, duration, uid):
-        self.received_events.append((duration, uid))
+    def notify(self, uid, duration):
+        self.received_events.append((uid, duration))
 
 class TestRfidListener(unittest.TestCase):
 
@@ -41,9 +41,9 @@ class TestRfidListener(unittest.TestCase):
         spy = EventManagerSpy()
         self.tested.listen(spy)
         
-        self.assertEqual(spy.received_events.pop(0), (0, 'uid12'))
-        self.assertEqual(spy.received_events.pop(0), (1, 'uid12'))
-        self.assertEqual(spy.received_events.pop(0), (2, 'uid12'))
+        self.assertEqual(spy.received_events.pop(0), ('uid12', 0))
+        self.assertEqual(spy.received_events.pop(0), ('uid12', 1))
+        self.assertEqual(spy.received_events.pop(0), ('uid12', 2))
 
     def test_a_uid_then_another_uid(self):
         self.pirc522_mock.RFID.return_value.wait_for_tag()
@@ -53,8 +53,8 @@ class TestRfidListener(unittest.TestCase):
         spy = EventManagerSpy()
         self.tested.listen(spy)
         
-        self.assertEqual(spy.received_events.pop(0), (0, 'a_uid'))
-        self.assertEqual(spy.received_events.pop(0), (0, 'another_uid'))
+        self.assertEqual(spy.received_events.pop(0), ('a_uid', 0))
+        self.assertEqual(spy.received_events.pop(0), ('another_uid', 0))
         
 
 

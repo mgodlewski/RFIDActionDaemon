@@ -5,7 +5,7 @@ from pirc522 import RFID
 
 class EventManager:
 
-    def notify(self, duration, uid):
+    def notify(self, uid, duration):
         print datetime.datetime.fromtimestamp(time.time())
         print("\nCard read UID: "+str(uid[0])+","+str(uid[1])+","+str(uid[2])+","+str(uid[3])+","+str(uid[4]))
         print duration
@@ -41,9 +41,9 @@ class RfidListener:
                         previous_uid = bytes_uid
                         initial_timestamp = current_time
                         duration = 0
-                        eventManager.notify(duration, bytes_uid)
+                        eventManager.notify(bytes_uid, duration)
                     else :
                         if current_time >= initial_timestamp + datetime.timedelta(seconds=duration + self.event_delta):
                             duration += self.event_delta
-                            eventManager.notify(duration , bytes_uid)
+                            eventManager.notify(bytes_uid, duration)
 
