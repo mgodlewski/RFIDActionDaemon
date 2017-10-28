@@ -9,12 +9,17 @@ class EventManager:
         print datetime.datetime.fromtimestamp(time.time())
         print("\nCard read UID: "+str(uid[0])+","+str(uid[1])+","+str(uid[2])+","+str(uid[3])+","+str(uid[4]))
         print duration
+        #if bytes_uid in uids:
+        #    print (uids[bytes_uid]);
+        #    #os.system(uids[bytes_uid])
+        #else:
+        #    print("No command associated with this uid")
 
 class RfidListener:
 
     def __init__(self):
         self.rdr = RFID()
-        self.time_threshold = 1
+        self.event_delta = 1
 
     def listen(self, eventManager):
         previous_uid = None
@@ -28,26 +33,17 @@ class RfidListener:
         
                 (error, uid) = self.rdr.anticoll()
                 if not error:
-                    # Print UID
                     bytes_uid = bytes(uid)
                     if bytes_uid == "exit":
                         return;
                     current_time = time.time()
-                    #return ( self.time_threshold, bytes_uid)
                     if bytes_uid != previous_uid :
                         previous_uid = bytes_uid
                         initial_timestamp = current_time
                         duration = 0
                         eventManager.notify(duration, bytes_uid)
                     else :
-                        if current_time >= initial_timestamp + datetime.timedelta(seconds=duration + self.time_threshold):
-                            duration += self.time_threshold
-                            #print datetime.datetime.fromtimestamp(current_time)
-                            #print("\nCard read UID: "+str(uid[0])+","+str(uid[1])+","+str(uid[2])+","+str(uid[3])+","+str(uid[4]))
+                        if current_time >= initial_timestamp + datetime.timedelta(seconds=duration + self.event_delta):
+                            duration += self.event_delta
                             eventManager.notify(duration , bytes_uid)
-                        #if bytes_uid in uids:
-                        #    print (uids[bytes_uid]);
-                        #    #os.system(uids[bytes_uid])
-                        #else:
-                        #    print("No command associated with this uid")
 

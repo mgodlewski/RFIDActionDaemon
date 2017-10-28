@@ -27,24 +27,35 @@ class TestRfidListener(unittest.TestCase):
                     'time': self.time_mock }
         self.module_patcher = patch.dict('sys.modules', modules)
         self.module_patcher.start()
+        from rfid_daemon import RfidListener
+        self.tested = RfidListener()
 
     def tearDown(self):
         self.module_patcher.stop()
 
     def test_same_uid_for_2_seconds(self):
-        from rfid_daemon import RfidListener
-        tested = RfidListener()
         self.pirc522_mock.RFID.return_value.wait_for_tag()
         self.pirc522_mock.RFID.return_value.request.return_value = ( None, "data")
-        #self.pirc522_mock.RFID.return_value.anticoll.return_value = ( None, "exit")
         self.pirc522_mock.RFID.return_value.anticoll.side_effect = [( None, "uid12"), ( None, "uid12"), ( None, "uid12"), ( None, "exit")]
 
         spy = EventManagerSpy()
-        tested.listen(spy)
+        self.tested.listen(spy)
         
         self.assertEqual(spy.received_events.pop(0), (0, 'uid12'))
         self.assertEqual(spy.received_events.pop(0), (1, 'uid12'))
         self.assertEqual(spy.received_events.pop(0), (2, 'uid12'))
+
+    def test_a_uid_then_another_uid(self):
+        self.pirc522_mock.RFID.return_value.wait_for_tag()
+        self.pirc522_mock.RFID.return_value.request.return_value = ( None, "data")
+        self.pirc522_mock.RFID.return_value.anticoll.side_effect = [( None, "a_uid"), ( None, "another_uid"), ( None, "exit")]
+
+        spy = EventManagerSpy()
+        self.tested.listen(spy)
+        
+        self.assertEqual(spy.received_events.pop(0), (0, 'a_uid'))
+        self.assertEqual(spy.received_events.pop(0), (0, 'another_uid'))
+        
 
 
 if __name__ == '__main__':
