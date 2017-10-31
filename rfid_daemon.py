@@ -20,6 +20,7 @@ class RfidListener:
     def __init__(self):
         self.rdr = RFID()
         self.event_delta = 1
+        self.reset_duration = 3
 
     def listen(self, eventManager):
         previous_uid = None
@@ -37,7 +38,7 @@ class RfidListener:
                     if bytes_uid == "exit":
                         return;
                     current_time = time.time()
-                    if bytes_uid != previous_uid :
+                    if bytes_uid != previous_uid or current_time >= initial_timestamp + datetime.timedelta(seconds= self.reset_duration): 
                         previous_uid = bytes_uid
                         initial_timestamp = current_time
                         duration = 0
