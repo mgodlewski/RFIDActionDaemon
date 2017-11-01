@@ -2,6 +2,13 @@ import unittest
 from mock import patch, Mock, MagicMock
 import datetime
 
+class NowBuilderForTest:
+    def __init__(self, delta_list):
+        self.initial_datetime = datetime.datetime(2017, 10, 26, 20, 45, 56)
+        self.delta_list = delta_list
+    def now(self):
+        return self.initial_datetime + datetime.timedelta(seconds=self.delta_list.pop(0))
+
 class EventManagerSpy:
     def __init__(self):
         self.received_events = []
@@ -13,22 +20,11 @@ class TestRfidListener(unittest.TestCase):
     def setUp(self):
         import sys
         self.pirc522_mock = MagicMock()
-        self.time_mock = MagicMock()
-        a_time = datetime.datetime(2017, 10, 26, 20, 45, 56)
-        self.time_mock.time.side_effect = [ a_time
-                                        , a_time + datetime.timedelta(seconds=1)
-                                        , a_time + datetime.timedelta(seconds=2)
-                                        , a_time + datetime.timedelta(seconds=3)
-                                        , a_time + datetime.timedelta(seconds=4)
-                                        , a_time + datetime.timedelta(seconds=5)
-                                        , a_time + datetime.timedelta(seconds=6)
-                                        , a_time + datetime.timedelta(seconds=7)]
-        modules = { 'pirc522': self.pirc522_mock,
-                    'time': self.time_mock }
+        modules = { 'pirc522': self.pirc522_mock }
         self.module_patcher = patch.dict('sys.modules', modules)
         self.module_patcher.start()
         from rfid_daemon import RfidListener
-        self.tested = RfidListener()
+        self.tested = RfidListener(NowBuilderForTest(range(0,8)))
 
     def tearDown(self):
         self.module_patcher.stop()
@@ -57,10 +53,8 @@ class TestRfidListener(unittest.TestCase):
         self.assertEqual(spy.received_events.pop(0), ('another_uid', 0))
         
     def test_a_uid_then_nothing_for_3_seconds_then_the_same_uid(self):
-        a_time = datetime.datetime(2017, 10, 26, 20, 45, 56)
-        self.time_mock.time.side_effect = [ a_time
-                                        , a_time + datetime.timedelta(seconds=4)
-                                        , a_time + datetime.timedelta(seconds=5)]
+        from rfid_daemon import RfidListener
+        self.tested = RfidListener(NowBuilderForTest([0, 4, 5]))
         self.pirc522_mock.RFID.return_value.wait_for_tag()
         self.pirc522_mock.RFID.return_value.request.return_value = ( None, "data")
         self.pirc522_mock.RFID.return_value.anticoll.side_effect = [( None, "a_uid"), ( None, "a_uid"), ( None, "exit")]

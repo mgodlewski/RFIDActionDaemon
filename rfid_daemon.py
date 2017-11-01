@@ -1,4 +1,3 @@
-import time
 import datetime
 import os
 from pirc522 import RFID
@@ -6,21 +5,25 @@ from pirc522 import RFID
 class EventManager:
 
     def notify(self, uid, duration):
-        print datetime.datetime.fromtimestamp(time.time())
-        print("\nCard read UID: "+str(uid[0])+","+str(uid[1])+","+str(uid[2])+","+str(uid[3])+","+str(uid[4]))
-        print duration
-        #if bytes_uid in uids:
-        #    print (uids[bytes_uid]);
-        #    #os.system(uids[bytes_uid])
-        #else:
-        #    print("No command associated with this uid")
+        print datetime.datetime.now()
+        print("\nCard read UID: %s" % uid)
+        if uid in self.uids:
+            print (self.uids[uid]);
+            os.system(self.uids[uid])
+        else:
+            print("No command associated with this uid")
+
+class NowBuilder:
+    def now(self):
+        return datetime.datetime.now()
 
 class RfidListener:
 
-    def __init__(self):
+    def __init__(self, nowBuilder):
         self.rdr = RFID()
         self.event_delta = 1
         self.reset_duration = 3
+        self.nowBuilder = nowBuilder
 
     def listen(self, eventManager):
         previous_uid = None
@@ -37,7 +40,7 @@ class RfidListener:
                     bytes_uid = bytes(uid)
                     if bytes_uid == "exit":
                         return;
-                    current_time = time.time()
+                    current_time = self.nowBuilder.now()
                     if bytes_uid != previous_uid or current_time >= initial_timestamp + datetime.timedelta(seconds= self.reset_duration): 
                         previous_uid = bytes_uid
                         initial_timestamp = current_time
