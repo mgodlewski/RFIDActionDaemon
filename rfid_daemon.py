@@ -1,6 +1,5 @@
 import datetime
 import os
-from pirc522 import RFID
 
 class EventManager:
 
@@ -17,37 +16,43 @@ class NowBuilder:
     def now(self):
         return datetime.datetime.now()
 
+class UidProvider:
+    def __init__(self):
+        from pirc522 import RFID
+        self.rdr = RFID()
+
+    def wait_for_uid(self):
+        # Wait for tag
+        self.rdr.wait_for_tag()
+        # Request tag
+        (error, data) = self.rdr.request()
+        if not error:
+            (error, uid) = self.rdr.anticoll()
+            if not error:
+                return bytes(uid)
+
 class RfidListener:
 
-    def __init__(self, nowBuilder):
-        self.rdr = RFID()
+    def __init__(self, uidProvider, nowBuilder):
         self.event_delta = 1
         self.reset_duration = 3
+        self.uidProvider = uidProvider
         self.nowBuilder = nowBuilder
 
     def listen(self, eventManager):
         previous_uid = None
         while True:
-            # Wait for tag
-            self.rdr.wait_for_tag()
-        
-            # Request tag
-            (error, data) = self.rdr.request()
-            if not error:
-        
-                (error, uid) = self.rdr.anticoll()
-                if not error:
-                    bytes_uid = bytes(uid)
-                    if bytes_uid == "exit":
-                        return;
-                    current_time = self.nowBuilder.now()
-                    if bytes_uid != previous_uid or current_time >= initial_timestamp + datetime.timedelta(seconds= self.reset_duration): 
-                        previous_uid = bytes_uid
-                        initial_timestamp = current_time
-                        duration = 0
-                        eventManager.notify(bytes_uid, duration)
-                    else :
-                        if current_time >= initial_timestamp + datetime.timedelta(seconds=duration + self.event_delta):
-                            duration += self.event_delta
-                            eventManager.notify(bytes_uid, duration)
+            bytes_uid = self.uidProvider.wait_for_uid()
+            if bytes_uid == "exit":
+                return;
+            current_time = self.nowBuilder.now()
+            if bytes_uid != previous_uid or current_time >= initial_timestamp + datetime.timedelta(seconds= self.reset_duration): 
+                previous_uid = bytes_uid
+                initial_timestamp = current_time
+                duration = 0
+                eventManager.notify(bytes_uid, duration)
+            else :
+                if current_time >= initial_timestamp + datetime.timedelta(seconds=duration + self.event_delta):
+                    duration += self.event_delta
+                    eventManager.notify(bytes_uid, duration)
 
