@@ -80,6 +80,26 @@ class TestRfidListener(unittest.TestCase):
         self.assertEqual(spy.received_events.pop(0), ('a_uid', 0))
         self.assertEqual(spy.received_events.pop(0), ('a_uid', 0))
         
+class TestEventManager(unittest.TestCase):
+
+    def setUp(self):
+        from rfid_daemon import EventManager
+        from tempfile import NamedTemporaryFile
+        self.confFile = NamedTemporaryFile(delete=False)
+
+    def tearDown(self):
+        import os
+        os.unlink(self.confFile.name)
+
+    def test_init_load_confFile(self):
+        from rfid_daemon import EventManager
+        self.confFile.write("1,1,1,1,1 command 1\n")
+        self.confFile.write("2,2,2,2,2 command 2\n")
+        self.confFile.close()
+        self.tested = EventManager(self.confFile.name)
+
+        self.assertEqual(self.tested.uids, { "[1, 1, 1, 1, 1]": "command 1\n",
+                                             "[2, 2, 2, 2, 2]": "command 2\n"})
 
 
 if __name__ == '__main__':

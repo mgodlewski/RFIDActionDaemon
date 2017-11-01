@@ -3,6 +3,15 @@ import os
 
 class EventManager:
 
+    def __init__(self, confFile):
+        self.uids = {}
+        with open(confFile) as f:
+            for line in f:
+                key, action = line.split(None, 1)
+                uid = bytes(map(int, key.split(',')))
+                self.uids[uid] = action
+                print("Conf: %-19s %s" % (uid, action))
+
     def notify(self, uid, duration):
         print datetime.datetime.now()
         print("\nCard read UID: %s" % uid)
@@ -56,3 +65,6 @@ class RfidListener:
                     duration += self.event_delta
                     eventManager.notify(bytes_uid, duration)
 
+if __name__ == "__main__":
+    e = EventManager("uid2Actions.conf")
+    RfidListener(UidProvider(), NowBuilder()).listen(e)
