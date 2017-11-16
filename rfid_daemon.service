@@ -1,0 +1,15 @@
+[Unit]
+Description=RFID Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/pi/RFIDDaemon
+ExecStart=/usr/bin/stdbuf -oL /home/pi/RFIDDaemon/rfid_daemon.py
+Restart=on-abort
+StandardOutput=syslog+console
+
+[Install]
+WantedBy=multi-user.target
+
