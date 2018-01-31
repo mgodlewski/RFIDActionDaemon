@@ -47,6 +47,7 @@ class RfidListener:
         self.reset_duration = 3
         self.uidProvider = uidProvider
         self.nowBuilder = nowBuilder
+        self.initial_timestamp = self.nowBuilder.now()
 
     def listen(self, eventManager):
         previous_uid = None
@@ -55,13 +56,13 @@ class RfidListener:
             if bytes_uid == "exit":
                 return;
             current_time = self.nowBuilder.now()
-            if bytes_uid != previous_uid or current_time >= initial_timestamp + datetime.timedelta(seconds= self.reset_duration): 
+            if bytes_uid != previous_uid or current_time >= self.initial_timestamp + datetime.timedelta(seconds= self.reset_duration): 
                 previous_uid = bytes_uid
-                initial_timestamp = current_time
+                self.initial_timestamp = current_time
                 duration = 0
                 eventManager.notify(bytes_uid, duration)
             else :
-                if current_time >= initial_timestamp + datetime.timedelta(seconds=duration + self.event_delta):
+                if current_time >= self.initial_timestamp + datetime.timedelta(seconds=duration + self.event_delta):
                     duration += self.event_delta
                     eventManager.notify(bytes_uid, duration)
 
